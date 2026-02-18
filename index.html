@@ -52,7 +52,7 @@
     <canvas id="canvas"></canvas>
 
     <div class="character-container">
-        <img id="boy-image" src="boy_front.png" alt="Character">
+        <img id="boy-image" src="/boy_front.png" alt="Character">
     </div>
 
     <script>
@@ -81,11 +81,11 @@
         const midHeight = canvas.height / 2;
 
         if (y < midHeight) {
-            boyImg.src = 'boy_front.png';
+            boyImg.src = '/boy_front.png';
         } else if (x < midWidth) {
-            boyImg.src = 'boy_left.png';
+            boyImg.src = '/boy_left.png';
         } else {
-            boyImg.src = 'boy_right.png';
+            boyImg.src = '/boy_right.png';
         }
     }
 
