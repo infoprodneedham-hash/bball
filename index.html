@@ -11,132 +11,139 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #f0f0f0;
-            font-family: sans-serif;
+            background-color: #e0e0e0;
         }
 
         #canvas {
             display: block;
+            background: radial-gradient(circle, #ffffff 0%, #dcdcdc 100%);
         }
 
         .character-container {
             position: absolute;
-            bottom: 20px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
         }
 
         #boy-image {
-            width: 100px; /* Adjust size as needed */
-            height: auto;
-            transition: opacity 0.2s ease;
-        }
-
-        .content {
-            position: absolute;
-            top: 20%;
-            width: 100%;
-            text-align: center;
-            pointer-events: none; /* Allows ball to "pass under" text */
+            width: 120px;
+            height: 120px;
+            display: block;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div class="content">
-        <h1>Welcome to the Site</h1>
-        <p>Watch the ball and see the character react!</p>
-    </div>
-
     <canvas id="canvas"></canvas>
 
     <div class="character-container">
-        <img id="boy-image" src="/boy_front.png" alt="Character">
+        <img id="boy-image" src="https://via.placeholder.com/120/0000FF/FFFFFF?text=FRONT" alt="Character">
     </div>
 
     <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const boyImg = document.getElementById('boy-image');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const boyImg = document.getElementById('boy-image');
 
-    // Physics Constants
-    const gravity = 0.25;    // The downward pull
-    const bounce = -0.98;    // Energy retained (0.98 prevents infinite speed gain)
-    const ballRadius = 24;
+        // Assets Mapping (Swap these strings with your filenames later)
+        const images = {
+            front: "https://via.placeholder.com/120/0000FF/FFFFFF?text=FRONT",
+            left: "https://via.placeholder.com/120/FF0000/FFFFFF?text=LEFT",
+            right: "https://via.placeholder.com/120/00FF00/000000?text=RIGHT"
+        };
 
-    let x, y, dx, dy;
-    
-    function init() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        x = canvas.width / 2;
-        y = 50;   // Start near the top
-        dx = 5;   // Initial horizontal push
-        dy = 0;   // Start falling from rest
-    }
-
-    function updateImage() {
-        const midWidth = canvas.width / 2;
-        const midHeight = canvas.height / 2;
-
-        if (y < midHeight) {
-            boyImg.src = 'boy_front.png';
-        } else if (x < midWidth) {
-            boyImg.src = 'boy_left.png';
-        } else {
-            boyImg.src = 'boy_right.png';
-        }
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Physics Configuration
+        const gravity = 0.25;
+        const bounce = -0.95; 
+        const ballRadius = 25;
         
-        // Draw Basketball
-        ctx.beginPath();
-        ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-        ctx.fillStyle = "#FF8C00";
-        ctx.fill();
-        ctx.stroke();
-        ctx.closePath();
+        let x, y, dx, dy;
 
-        updateImage();
-
-        // Apply Gravity to Vertical Velocity
-        dy += gravity;
-
-        // Apply Velocity to Position
-        x += dx;
-        y += dy;
-
-        // Floor Collision
-        if (y + ballRadius > canvas.height) {
-            y = canvas.height - ballRadius;
-            dy *= bounce; // Reverse direction and lose a tiny bit of energy
-            
-            // "Never stop" logic: If it gets too slow, give it a boost
-            if (Math.abs(dy) < 5) dy -= 10; 
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            x = canvas.width / 2;
+            y = 100;
+            dx = 5;
+            dy = 2;
         }
 
-        // Ceiling Collision
-        if (y - ballRadius < 0) {
-            y = ballRadius;
-            dy *= bounce;
+        function updateImage() {
+            const midWidth = canvas.width / 2;
+            const midHeight = canvas.height / 2;
+            let nextSrc;
+
+            if (y < midHeight) {
+                nextSrc = images.front;
+            } else if (x < midWidth) {
+                nextSrc = images.left;
+            } else {
+                nextSrc = images.right;
+            }
+
+            // Only update the DOM if the source actually changes to prevent flickering
+            if (boyImg.src !== nextSrc) {
+                boyImg.src = nextSrc;
+            }
         }
 
-        // Wall Collisions
-        if (x + ballRadius > canvas.width || x - ballRadius < 0) {
-            dx = -dx;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Ball Shadow (Optional touch for depth)
+            ctx.beginPath();
+            ctx.ellipse(x, canvas.height - 5, ballRadius * (y/canvas.height), 5, 0, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.fill();
+            ctx.closePath();
+
+            // The Basketball
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#FF8C00";
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 3;
+            ctx.fill();
+            ctx.stroke();
+            // Draw a simple basketball curve
+            ctx.moveTo(x - ballRadius, y);
+            ctx.quadraticCurveTo(x, y - ballRadius, x + ballRadius, y);
+            ctx.stroke();
+            ctx.closePath();
+
+            updateImage();
+
+            // Physics logic
+            dy += gravity;
+            x += dx;
+            y += dy;
+
+            // Floor bounce
+            if (y + ballRadius > canvas.height) {
+                y = canvas.height - ballRadius;
+                dy *= bounce;
+                if (Math.abs(dy) < 3) dy = -12; // "Perpetual motion" kick
+            }
+            // Ceiling bounce
+            if (y - ballRadius < 0) {
+                y = ballRadius;
+                dy *= bounce;
+            }
+            // Wall bounce
+            if (x + ballRadius > canvas.width || x - ballRadius < 0) {
+                dx = -dx;
+                x = (x - ballRadius < 0) ? ballRadius : canvas.width - ballRadius;
+            }
+
+            requestAnimationFrame(draw);
         }
 
-        requestAnimationFrame(draw);
-    }
-
-    window.addEventListener('resize', init);
-    init();
-    draw();
-</script>
+        window.addEventListener('resize', init);
+        init();
+        draw();
+    </script>
 </body>
 </html>
-
-
